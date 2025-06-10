@@ -122,13 +122,29 @@ app.post("/alarm", (req, res) => {
     // Generate sleep pattern
     const data = generateSleepPattern(arraySize);
 
+    // Helper function to convert UTC to IST
+    const convertToIST = (utcDate) => {
+      const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+      const istDate = new Date(utcDate.getTime() + istOffset);
+      return istDate.toISOString().replace("Z", "+05:30");
+    };
+
     // Response
     const response = {
-      target: target.toISOString(),
+      target: {
+        utc: target.toISOString(),
+        ist: convertToIST(target),
+      },
       data: data,
       metadata: {
-        softLimit: softLimit.toISOString(),
-        hardLimit: hardLimit.toISOString(),
+        softLimit: {
+          utc: softLimit.toISOString(),
+          ist: convertToIST(softLimit),
+        },
+        hardLimit: {
+          utc: hardLimit.toISOString(),
+          ist: convertToIST(hardLimit),
+        },
         timeDifferenceSeconds: timeDiffSeconds,
         arraySize: arraySize,
         sleepStates: {
@@ -156,10 +172,20 @@ app.post("/alarm", (req, res) => {
 
 // Health check endpoint
 app.get("/health", (req, res) => {
+  const now = new Date();
+  const convertToIST = (utcDate) => {
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(utcDate.getTime() + istOffset);
+    return istDate.toISOString().replace("Z", "+05:30");
+  };
+
   res.json({
     status: "OK",
     message: "Dynamic Alarm System is running",
-    timestamp: new Date().toISOString(),
+    timestamp: {
+      utc: now.toISOString(),
+      ist: convertToIST(now),
+    },
   });
 });
 
